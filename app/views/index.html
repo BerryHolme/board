@@ -7,29 +7,105 @@
     <script>
         $(document).ready(function () {
             loadpins();
+
+            // Submit form via AJAX
+            $('form').submit(function(event) {
+                event.preventDefault(); // Prevent default form submission
+
+                var content = $('#content').val();
+                var author = $('#author').val();
+                var color = $('#color').val();
+
+                $.ajax({
+                    type: 'POST',
+                    url: 'addpin/',
+                    data: { content: content, author: author, color: color },
+                    success: function(response) {
+                        if (response.success) {
+                            // Clear form fields
+                            $('#content').val('');
+                            $('#author').val('');
+                            $('#color').val('');
+
+                            // Reload pins
+                            loadpins();
+                        } else {
+                            //alert('Error: ' + response.message);
+                            loadpins();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error: ', error);
+                    }
+                });
+            });
         });
 
+        // Function to load pins
         function loadpins() {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', '/board/loadpins/', true);
             xhr.onload = function() {
                 if (xhr.status === 200) {
                     var pins = JSON.parse(xhr.responseText);
-                    var contentDiv = document.getElementById('content');
+                    var contentDiv = document.getElementById('pins');
+                    contentDiv.innerHTML = ''; // Clear existing pins
                     pins.forEach(function(pin) {
                         var pinDiv = document.createElement('div');
                         pinDiv.className = 'pin';
                         pinDiv.style.backgroundColor = '#' + pin.color;
-                        pinDiv.innerHTML = '<p>' + pin.content + '</p><p>Author: ' + pin.author + '</p>';
+                        pinDiv.style.color = getContrastYIQ(pin.color);
+                        pinDiv.innerHTML = '<p>' + pin.content + '</p><p>Napsal: ' + pin.author + '</p>';
+
+                        // Create a "Done" button
+                        var doneButton = document.createElement('button');
+                        doneButton.textContent = 'Hotovo';
+                        doneButton.addEventListener('click', function() {
+                            deletePin(pin.id); // Call deletePin function on button click
+                        });
+                        pinDiv.appendChild(doneButton);
+
                         contentDiv.appendChild(pinDiv);
                     });
                 }
             }
             xhr.send();
         }
+
+        // Function to delete a pin
+        function deletePin(pinId) {
+            $.ajax({
+                type: 'POST',
+                url: 'delete/',
+                data: { id: pinId },
+                success: function(response) {
+                    if (response.success) {
+                        loadpins(); // Reload pins after deletion
+                    } else {
+                        console.error('Error deleting pin');
+                        loadpins();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error: ', error);
+                    loadpins();
+                }
+            });
+        }
+
+        function getContrastYIQ(hexcolor){
+            var r = parseInt(hexcolor.substr(0,2),16);
+            var g = parseInt(hexcolor.substr(2,2),16);
+            var b = parseInt(hexcolor.substr(4,2),16);
+            var yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+            return (yiq >= 128) ? 'black' : 'white';
+        }
     </script>
+
+
+
     <style>
-        .content {
+        .pins {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 10px;
@@ -44,7 +120,19 @@
 
 </head>
 <body>
-<div id="content" class="content">
+<form method="post" action="addpin/">
+    <label for="content">Obsah</label>
+    <input type="text" class="content" id="content" required>
+
+    <label for="author">Autor</label>
+    <input type="text" class="author" id="author" required>
+
+    <label for="color">Vyberte barvu</label>
+    <input type="color" class="color" id="color" required>
+    <input type="submit" value="Vytvořit">
+
+</form>
+<div id="pins" class="pins">
 </div>
 
 
