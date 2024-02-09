@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Nástěnka</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            loadpins();
+        });
+
+        function loadpins() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/board/loadpins/', true);
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    var pins = JSON.parse(xhr.responseText);
+                    var contentDiv = document.getElementById('content');
+                    pins.forEach(function(pin) {
+                        var pinDiv = document.createElement('div');
+                        pinDiv.className = 'pin';
+                        pinDiv.style.backgroundColor = '#' + pin.color;
+                        pinDiv.innerHTML = '<p>' + pin.content + '</p><p>Author: ' + pin.author + '</p>';
+                        contentDiv.appendChild(pinDiv);
+                    });
+                }
+            }
+            xhr.send();
+        }
+    </script>
+    <style>
+        .content {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            padding: 10px;
+        }
+        .pin {
+            padding: 10px;
+            border-radius: 5px;
+            color: #fff;
+        }
+    </style>
+
+</head>
+<body>
+<div id="content" class="content">
+</div>
+
+
+</body>
+</html>
