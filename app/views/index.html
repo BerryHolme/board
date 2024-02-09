@@ -7,6 +7,7 @@
     <script>
         $(document).ready(function () {
             loadpins();
+            setInterval(loadpins, 500);
 
             // Submit form via AJAX
             $('form').submit(function(event) {
